@@ -3,6 +3,7 @@ jobs:
   build:
     docker:
       - image: circleci/buildpack-deps:stretch
+      - image: python 
     steps:
       - checkout 
       - setup_remote_docker
