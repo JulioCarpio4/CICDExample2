@@ -22,7 +22,7 @@ jobs:
             sudo apt-get install -y less
             sudo apt-get install python
             export AWS_PAGER="less"
-            pip3 install ecs-deploy
+            pip install ecs-deploy
       - run: 
           name: Pushing the created docker image to AWS 
           command: |
