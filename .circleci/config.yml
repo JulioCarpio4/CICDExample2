@@ -20,9 +20,9 @@ jobs:
             unzip awscliv2.zip
             sudo ./aws/install
             sudo apt-get install -y less
-            sudo apt-get install python3.6
+            sudo apt-get install python
             export AWS_PAGER="less"
-            pip install ecs-deploy
+            pip3 install ecs-deploy
       - run: 
           name: Pushing the created docker image to AWS 
           command: |
