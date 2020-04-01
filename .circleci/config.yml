@@ -25,9 +25,9 @@ jobs:
       - run: 
           name: Pushing the created docker image to AWS 
           command: |
-            image=$(docker images circlecidockerimage --format {{.ID}})
+            export image=$(docker images circlecidockerimage --format {{.ID}})
             aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 492266378106.dkr.ecr.us-east-1.amazonaws.com/circlecidockerimagejc
-            docker tag circlecidockerimage:latest 92266378106.dkr.ecr.us-east-1.amazonaws.com/circlecidockerimagejc:"$image"
+            docker tag circlecidockerimage:latest 492266378106.dkr.ecr.us-east-1.amazonaws.com/circlecidockerimagejc:"$image"
             docker push 492266378106.dkr.ecr.us-east-1.amazonaws.com/circlecidockerimagejc:"$image"
       - run: 
           name: Create a task definition to use the new docker image
