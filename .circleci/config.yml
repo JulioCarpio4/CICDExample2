@@ -37,7 +37,7 @@ jobs:
       - run: 
           name: Update Elastic Container Service to use the new task definition
           command: |
-            ecs deploy Main-JC-ECS-34I0LIWU6AUY-ECSCluster-1NJHOEGS6Z603 service-jc --task circlecitaskdef
+            ecs deploy Main-JC-ECS-34I0LIWU6AUY-ECSCluster-1NJHOEGS6Z603 service-jc --task circlecitaskdef --timeout 600
 workflows: 
   version: 2
   testworkflow:
