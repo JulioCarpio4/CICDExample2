@@ -1,2 +1,2 @@
-# CICDExample2
-Variation of repository CICDExample
+# CICDExample
+CI/CD Example using 
