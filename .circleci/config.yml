@@ -1,0 +1,59 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: circleci/buildpack-deps:stretch
+    steps:
+      - checkout 
+      - setup_remote_docker
+      - run:
+          name: Build docker image
+          command: |
+            echo 'Starting building docker image'
+            docker build -t circlecidockerimage .
+            echo 'Finished building docker image'
+      - run: 
+          name: Installation of aws-cli
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+            sudo apt-get install -y less
+            export AWS_PAGER="less"
+      - run: 
+          name: Pushing the created docker image to AWS 
+          command: |
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 492266378106.dkr.ecr.us-east-1.amazonaws.com/circlecidockerimagejc
+            docker tag circlecidockerimage:latest 492266378106.dkr.ecr.us-east-1.amazonaws.com/circlecidockerimagejc:latest
+            docker push 492266378106.dkr.ecr.us-east-1.amazonaws.com/circlecidockerimagejc:latest
+      - run: 
+          name: Create a task definition to use the new docker image
+          command: |
+            aws configure set default.region us-east-1
+            aws ecs register-task-definition --family circlecitaskdef --container-definitions "[{\"name\":\"service-jc\",\"image\":\"492266378106.dkr.ecr.us-east-1.amazonaws.com/circlecidockerimagejc\",\"cpu\":256,\"memory\":256,\"portMappings\":[{\"containerPort\":80,\"hostPort\":0}],\"essential\":true}]" --output text 
+      - run: 
+          name: Update Elastic Container Service to use the new task definition
+          command: |
+            ECS_ID=$(aws ecs update-service --cluster Main-JC-ECS-34I0LIWU6AUY-ECSCluster-1NJHOEGS6Z603 --service service-jc --task-definition circlecitaskdef --force-new-deployment --output table --query id)
+            aws ecs wait services-stable --cluster Main-JC-ECS-34I0LIWU6AUY-ECSCluster-1NJHOEGS6Z603 --services service-jc
+            echo 'Finished update service definition'
+  completion-check:
+    docker:
+      - image: alpine:3.7
+    steps:
+      - run:
+          name: Completion task Checking
+          command: |
+            echo 'Finished updating task definition and ecs update-service'
+workflows: 
+  version: 2
+  testworkflow:
+    jobs: 
+      - build:
+          context: AWS Setup 
+          filters:
+              branches:
+                only: master
+      - completion-check:
+          requires: 
+            - build
