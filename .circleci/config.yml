@@ -13,19 +13,20 @@ jobs:
             docker build -t circlecidockerimage .
             echo 'Finished building docker image'
       - run: 
-          name: Installation of aws-cli
+          name: Installation of aws-cli and tools
           command: |
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             unzip awscliv2.zip
             sudo ./aws/install
             sudo apt-get install -y less
             export AWS_PAGER="less"
+            pip install ecs-deploy
       - run: 
           name: Pushing the created docker image to AWS 
           command: |
             aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 492266378106.dkr.ecr.us-east-1.amazonaws.com/circlecidockerimagejc
-            docker tag circlecidockerimage:latest 492266378106.dkr.ecr.us-east-1.amazonaws.com/circlecidockerimagejc:latest
-            docker push 492266378106.dkr.ecr.us-east-1.amazonaws.com/circlecidockerimagejc:latest
+            docker tag circlecidockerimage:latest 92266378106.dkr.ecr.us-east-1.amazonaws.com/circlecidockerimagejc:$(docker images circlecidockerimage --format {{.ID}})
+            docker push 492266378106.dkr.ecr.us-east-1.amazonaws.com/circlecidockerimagejc:$(docker images circlecidockerimage --format {{.ID}})
       - run: 
           name: Create a task definition to use the new docker image
           command: |
@@ -34,17 +35,7 @@ jobs:
       - run: 
           name: Update Elastic Container Service to use the new task definition
           command: |
-            ECS_ID=$(aws ecs update-service --cluster Main-JC-ECS-34I0LIWU6AUY-ECSCluster-1NJHOEGS6Z603 --service service-jc --task-definition circlecitaskdef --force-new-deployment --output table --query id)
-            aws ecs wait services-stable --cluster Main-JC-ECS-34I0LIWU6AUY-ECSCluster-1NJHOEGS6Z603 --services service-jc
-            echo 'Finished update service definition'
-  completion-check:
-    docker:
-      - image: alpine:3.7
-    steps:
-      - run:
-          name: Completion task Checking
-          command: |
-            echo 'Finished updating task definition and ecs update-service'
+            ecs deploy Main-JC-ECS-34I0LIWU6AUY-ECSCluster-1NJHOEGS6Z603 service-jc --task circlecitaskdef
 workflows: 
   version: 2
   testworkflow:
@@ -54,6 +45,3 @@ workflows:
           filters:
               branches:
                 only: master
-      - completion-check:
-          requires: 
-            - build
